@@ -11,7 +11,11 @@ class PhotoBooth:
         self.root = root
         self.root.title("Mini Photo Booth")
         self.root.geometry("800x480")
+        self.root.attributes("-fullscreen", True)
         self.root.configure(bg="#181827")
+
+        # Press Escape to exit fullscreen during testing
+        self.root.bind("<Escape>", lambda event: self.root.destroy())
 
         self.image_ref = None
         self.photo_path = None
@@ -36,29 +40,42 @@ class PhotoBooth:
             self.root,
             text=text,
             command=command,
-            font=("Arial", 20, "bold"),
+            font=("Arial", 18, "bold"),
             bg="#e89ab0",
             fg="#181827",
+            activebackground="#f4b6ca",
             padx=20,
-            pady=10
+            pady=10,
+            relief="flat"
         )
 
     def show_home(self):
         self.clear_screen()
 
-        self.make_label("MINI PHOTO BOOTH", 36).pack(pady=75)
+        self.make_label(
+            "MINI PHOTO BOOTH", 30
+        ).pack(pady=(65, 30))
 
         self.make_button(
             "TAKE PHOTO",
             lambda: self.countdown(3)
-        ).pack(pady=20)
+        ).pack(pady=15)
+
+        self.make_label(
+            "Tap to capture a memory!", 15
+        ).pack(pady=15)
 
     def countdown(self, number):
         self.clear_screen()
 
         if number > 0:
-            self.make_label("GET READY!", 28).pack(pady=50)
-            self.make_label(str(number), 90).pack(pady=10)
+            self.make_label(
+                "GET READY!", 26
+            ).pack(pady=(65, 15))
+
+            self.make_label(
+                str(number), 85
+            ).pack(pady=5)
 
             self.root.after(
                 1000,
@@ -69,7 +86,10 @@ class PhotoBooth:
 
     def capture(self):
         self.clear_screen()
-        self.make_label("Taking your photo...", 28).pack(pady=150)
+
+        self.make_label(
+            "Taking your photo...", 24
+        ).pack(pady=130)
 
         threading.Thread(
             target=self.capture_worker,
@@ -79,17 +99,28 @@ class PhotoBooth:
     def capture_worker(self):
         try:
             path = take_photo()
-            self.root.after(0, lambda: self.show_photo(path))
+            self.root.after(
+                0,
+                lambda: self.show_photo(path)
+            )
         except Exception as error:
             message = str(error)
-            self.root.after(0, lambda: self.show_error(message))
+            self.root.after(
+                0,
+                lambda: self.show_error(message)
+            )
 
     def show_photo(self, path):
         self.photo_path = path
         self.clear_screen()
 
-        image = Image.open(path)
-        image.thumbnail((540, 340))
+        self.make_label(
+            "YOUR PHOTO!", 23
+        ).pack(pady=(8, 5))
+
+        with Image.open(path) as original:
+            image = original.copy()
+        image.thumbnail((480, 315))
 
         self.image_ref = ImageTk.PhotoImage(image)
 
@@ -97,23 +128,30 @@ class PhotoBooth:
             self.root,
             image=self.image_ref,
             bg="#181827"
-        ).pack(pady=10)
+        ).pack(pady=5)
 
         self.make_button(
             "TAKE ANOTHER",
             self.show_home
-        ).pack(pady=10)
+        ).pack(pady=5)
 
     def show_error(self, message):
         self.clear_screen()
-        self.make_label("Camera error", 26).pack(pady=25)
+
+        self.make_label(
+            "Camera Error", 26
+        ).pack(pady=(60, 20))
 
         tk.Label(
             self.root,
             text=message,
+            font=("Arial", 13),
             fg="white",
             bg="#181827",
             wraplength=700
         ).pack(pady=10)
 
-        self.make_button("BACK", self.show_home).pack(pady=10)
+        self.make_button(
+            "BACK",
+            self.show_home
+        ).pack(pady=20)
