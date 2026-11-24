@@ -2,6 +2,7 @@
 import tkinter as tk
 import threading
 from PIL import Image, ImageTk
+
 from camera import take_photo
 
 
@@ -10,9 +11,9 @@ class PhotoBooth:
         self.root = root
         self.root.title("Mini Photo Booth")
 
-        # Leave room for desktop taskbar and window borders
-        self.root.geometry("760x380+10+40")
-        self.root.resizable(False, False)
+        # Fullscreen 800x480 touchscreen
+        self.root.geometry("800x480")
+        self.root.attributes("-fullscreen", True)
         self.root.configure(bg="#181827")
 
         self.root.bind(
@@ -29,62 +30,80 @@ class PhotoBooth:
         for widget in self.root.winfo_children():
             widget.destroy()
 
-    def make_label(self, text, size=22):
+    def make_label(self, parent, text, size=24):
         return tk.Label(
-            self.root,
+            parent,
             text=text,
             font=("Arial", size, "bold"),
             fg="white",
             bg="#181827"
         )
 
-    def make_button(self, text, command):
+    def make_button(self, parent, text, command):
         return tk.Button(
-            self.root,
+            parent,
             text=text,
             command=command,
-            font=("Arial", 14, "bold"),
+            font=("Arial", 15, "bold"),
             bg="#e89ab0",
             fg="#181827",
             activebackground="#f4b6ca",
             padx=12,
-            pady=5,
+            pady=6,
             relief="flat"
         )
 
-    def show_home(self):
+    def make_page(self):
         self.clear_screen()
 
-        self.make_label(
-            "MINI PHOTO BOOTH", 26
-        ).pack(pady=(45, 20))
+        page = tk.Frame(
+            self.root,
+            bg="#181827",
+            width=800,
+            height=480
+        )
+        page.pack(fill="both", expand=True)
+        page.pack_propagate(False)
 
+        return page
+
+    def add_exit(self, page):
         self.make_button(
-            "TAKE PHOTO",
-            lambda: self.countdown(3)
-        ).pack(pady=10)
-
-        self.make_label(
-            "Tap to capture a memory!", 12
-        ).pack(pady=5)
-
-        self.make_button(
+            page,
             "EXIT",
             self.root.destroy
-        ).pack(pady=5)
+        ).place(x=680, y=12, width=105, height=42)
+
+    def show_home(self):
+        page = self.make_page()
+        self.add_exit(page)
+
+        self.make_label(
+            page, "MINI PHOTO BOOTH", 30
+        ).place(x=120, y=90, width=560, height=70)
+
+        self.make_button(
+            page, "TAKE PHOTO",
+            lambda: self.countdown(3)
+        ).place(x=260, y=215, width=280, height=70)
+
+        self.make_label(
+            page, "Tap to capture a memory!", 15
+        ).place(x=180, y=320, width=440, height=45)
 
     def countdown(self, number):
-        self.clear_screen()
+        page = self.make_page()
+        self.add_exit(page)
+
+        self.make_label(
+            page, "GET READY!", 28
+        ).place(x=200, y=65, width=400, height=60)
+
+        self.make_label(
+            page, str(number), 85
+        ).place(x=300, y=145, width=200, height=170)
 
         if number > 0:
-            self.make_label(
-                "GET READY!", 24
-            ).pack(pady=(50, 10))
-
-            self.make_label(
-                str(number), 70
-            ).pack(pady=5)
-
             self.root.after(
                 1000,
                 lambda: self.countdown(number - 1)
@@ -93,11 +112,12 @@ class PhotoBooth:
             self.capture()
 
     def capture(self):
-        self.clear_screen()
+        page = self.make_page()
+        self.add_exit(page)
 
         self.make_label(
-            "Taking your photo...", 22
-        ).pack(pady=110)
+            page, "Taking your photo...", 24
+        ).place(x=150, y=175, width=500, height=75)
 
         threading.Thread(
             target=self.capture_worker,
@@ -107,12 +127,15 @@ class PhotoBooth:
     def capture_worker(self):
         try:
             path = take_photo()
+
             self.root.after(
                 0,
                 lambda: self.show_photo(path)
             )
+
         except Exception as error:
             message = str(error)
+
             self.root.after(
                 0,
                 lambda: self.show_error(message)
@@ -120,57 +143,55 @@ class PhotoBooth:
 
     def show_photo(self, path):
         self.photo_path = path
-        self.clear_screen()
+        page = self.make_page()
+        self.add_exit(page)
 
         self.make_label(
-            "YOUR PHOTO!", 20
-        ).pack(pady=(5, 5))
+            page, "YOUR PHOTO!", 25
+        ).place(x=210, y=5, width=380, height=50)
 
         with Image.open(path) as original:
             image = original.copy()
 
-        image.thumbnail((370, 200))
+        image.thumbnail((570, 325))
         self.image_ref = ImageTk.PhotoImage(image)
 
-        tk.Label(
-            self.root,
+        photo_label = tk.Label(
+            page,
             image=self.image_ref,
             bg="#181827"
-        ).pack(pady=3)
+        )
+        photo_label.place(
+            x=400 - image.width // 2,
+            y=60,
+            width=image.width,
+            height=image.height
+        )
 
         self.make_button(
-            "TAKE ANOTHER",
+            page, "TAKE ANOTHER",
             self.show_home
-        ).pack(pady=4)
-
-        self.make_button(
-            "EXIT",
-            self.root.destroy
-        ).pack(pady=4)
+        ).place(x=280, y=400, width=240, height=55)
 
     def show_error(self, message):
-        self.clear_screen()
+        page = self.make_page()
+        self.add_exit(page)
 
         self.make_label(
-            "Camera Error", 22
-        ).pack(pady=(15, 10))
+            page, "Camera Error", 25
+        ).place(x=200, y=60, width=400, height=60)
 
         tk.Label(
-            self.root,
-            text=message[-500:],
-            font=("Arial", 10),
+            page,
+            text=message[-350:],
+            font=("Arial", 12),
             fg="white",
             bg="#181827",
-            wraplength=680,
+            wraplength=650,
             justify="center"
-        ).pack(pady=5)
+        ).place(x=75, y=140, width=650, height=175)
 
         self.make_button(
-            "BACK",
+            page, "BACK",
             self.show_home
-        ).pack(pady=10)
-
-        self.make_button(
-            "EXIT",
-            self.root.destroy
-        ).pack(pady=5)
+        ).place(x=300, y=365, width=200, height=55)
