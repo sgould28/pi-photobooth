@@ -121,18 +121,22 @@ class PhotoBooth:
                 lambda: self.show_error(message)
             )
 
+    
     def show_photo(self, path):
         self.photo_path = path
         self.clear_screen()
 
+        # Title with less spacing
         self.make_label(
-            "YOUR PHOTO!", 22
+            "YOUR PHOTO!", 20
         ).pack(pady=(5, 5))
 
+        # Resize picture to fit the touchscreen window
         with Image.open(path) as original:
             image = original.copy()
 
-        image.thumbnail((460, 270))
+        image.thumbnail((420, 220))
+
         self.image_ref = ImageTk.PhotoImage(image)
 
         tk.Label(
@@ -141,10 +145,18 @@ class PhotoBooth:
             bg="#181827"
         ).pack(pady=5)
 
+        # Button that fits below the photo
         self.make_button(
             "TAKE ANOTHER",
             self.show_home
         ).pack(pady=5)
+
+        # Exit button
+        self.make_button(
+            "EXIT",
+            self.root.destroy
+        ).pack(pady=5)
+
 
     def show_error(self, message):
         self.clear_screen()
