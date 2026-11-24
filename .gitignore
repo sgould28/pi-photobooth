@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Local configuration and credentials
+.env
+.env.*
+!.env.example
+.aws/
+
+# Captured photographs
+photos/
+*.jpg
+*.jpeg
+*.png
+
+# Editor and operating system
+.vscode/
+.DS_Store
+Thumbs.db
