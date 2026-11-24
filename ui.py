@@ -2,7 +2,6 @@
 import tkinter as tk
 import threading
 from PIL import Image, ImageTk
-
 from camera import take_photo
 
 
@@ -11,13 +10,15 @@ class PhotoBooth:
         self.root = root
         self.root.title("Mini Photo Booth")
 
-        # Windowed mode while testing
-        self.root.geometry("760x420")
+        # Leave room for desktop taskbar and window borders
+        self.root.geometry("760x380+10+40")
         self.root.resizable(False, False)
         self.root.configure(bg="#181827")
 
-        # Escape key closes the app
-        self.root.bind("<Escape>", lambda event: self.root.destroy())
+        self.root.bind(
+            "<Escape>",
+            lambda event: self.root.destroy()
+        )
 
         self.image_ref = None
         self.photo_path = None
@@ -28,7 +29,7 @@ class PhotoBooth:
         for widget in self.root.winfo_children():
             widget.destroy()
 
-    def make_label(self, text, size=24):
+    def make_label(self, text, size=22):
         return tk.Label(
             self.root,
             text=text,
@@ -42,12 +43,12 @@ class PhotoBooth:
             self.root,
             text=text,
             command=command,
-            font=("Arial", 16, "bold"),
+            font=("Arial", 14, "bold"),
             bg="#e89ab0",
             fg="#181827",
             activebackground="#f4b6ca",
-            padx=15,
-            pady=8,
+            padx=12,
+            pady=5,
             relief="flat"
         )
 
@@ -55,8 +56,8 @@ class PhotoBooth:
         self.clear_screen()
 
         self.make_label(
-            "MINI PHOTO BOOTH", 28
-        ).pack(pady=(55, 25))
+            "MINI PHOTO BOOTH", 26
+        ).pack(pady=(45, 20))
 
         self.make_button(
             "TAKE PHOTO",
@@ -64,25 +65,24 @@ class PhotoBooth:
         ).pack(pady=10)
 
         self.make_label(
-            "Tap to capture a memory!", 13
-        ).pack(pady=10)
+            "Tap to capture a memory!", 12
+        ).pack(pady=5)
 
-        # Touchscreen-friendly exit button
         self.make_button(
             "EXIT",
             self.root.destroy
-        ).pack(pady=10)
+        ).pack(pady=5)
 
     def countdown(self, number):
         self.clear_screen()
 
         if number > 0:
             self.make_label(
-                "GET READY!", 26
-            ).pack(pady=(55, 10))
+                "GET READY!", 24
+            ).pack(pady=(50, 10))
 
             self.make_label(
-                str(number), 75
+                str(number), 70
             ).pack(pady=5)
 
             self.root.after(
@@ -96,8 +96,8 @@ class PhotoBooth:
         self.clear_screen()
 
         self.make_label(
-            "Taking your photo...", 24
-        ).pack(pady=130)
+            "Taking your photo...", 22
+        ).pack(pady=110)
 
         threading.Thread(
             target=self.capture_worker,
@@ -107,75 +107,70 @@ class PhotoBooth:
     def capture_worker(self):
         try:
             path = take_photo()
-
             self.root.after(
                 0,
                 lambda: self.show_photo(path)
             )
-
         except Exception as error:
             message = str(error)
-
             self.root.after(
                 0,
                 lambda: self.show_error(message)
             )
 
-    
     def show_photo(self, path):
         self.photo_path = path
         self.clear_screen()
 
-        # Title with less spacing
         self.make_label(
             "YOUR PHOTO!", 20
         ).pack(pady=(5, 5))
 
-        # Resize picture to fit the touchscreen window
         with Image.open(path) as original:
             image = original.copy()
 
-        image.thumbnail((420, 220))
-
+        image.thumbnail((370, 200))
         self.image_ref = ImageTk.PhotoImage(image)
 
         tk.Label(
             self.root,
             image=self.image_ref,
             bg="#181827"
-        ).pack(pady=5)
+        ).pack(pady=3)
 
-        # Button that fits below the photo
         self.make_button(
             "TAKE ANOTHER",
             self.show_home
-        ).pack(pady=5)
+        ).pack(pady=4)
 
-        # Exit button
         self.make_button(
             "EXIT",
             self.root.destroy
-        ).pack(pady=5)
-
+        ).pack(pady=4)
 
     def show_error(self, message):
         self.clear_screen()
 
         self.make_label(
-            "Camera Error", 24
-        ).pack(pady=(25, 10))
+            "Camera Error", 22
+        ).pack(pady=(15, 10))
 
         tk.Label(
             self.root,
-            text=message,
-            font=("Arial", 11),
+            text=message[-500:],
+            font=("Arial", 10),
             fg="white",
             bg="#181827",
             wraplength=680,
             justify="center"
-        ).pack(pady=10)
+        ).pack(pady=5)
 
         self.make_button(
             "BACK",
             self.show_home
         ).pack(pady=10)
+
+        self.make_button(
+            "EXIT",
+            self.root.destroy
+        ).pack(pady=5)
